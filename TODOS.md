@@ -1,5 +1,21 @@
 # TODOS
 
+## FORK-LOCAL (seamfix)
+
+### Enable this fork's own CI workflows (Platform, repo settings)
+
+**What:** The fork ships 14 workflow files but only CodeQL and Dependabot are active; `free-tests`, `quality-gate`,
+`version-gate` and `skill-docs` never run on fork-local PRs (seamfix/gstack#2 review, 2026-09-08). `skill-docs` is the
+gate that catches template/generated drift.
+**Why:** Fork-local patches are otherwise verified only on the author's machine.
+**Effort:** S (repo settings). **Priority:** P2. **Owner:** Platform Engineers (admin).
+
+### Fork-local changes that every upstream sync must re-apply
+
+`bin/gstack-team-init`, `bin/gstack-update-check`, `gstack-upgrade/SKILL.md(.tmpl)`, README/CONTRIBUTING/tutorial clone
+commands → `seamfix/gstack`. Guarded by the `fork-local:` test in `test/team-mode.test.ts` — if it fails after a sync,
+re-apply. Canonical list: seamfix/ai-governance `docs/runbooks/gstack-fork-sync.md`.
+
 ## NEXT PRIORITY
 
 ### P1: ZeroEntropy sunset — gbrain's default embedding provider dies Sept 4, 2026 (#2365)

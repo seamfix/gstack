@@ -199,6 +199,20 @@ describe('gstack-team-init', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
+  test('fork-local: install and upgrade paths point at seamfix/gstack, never upstream', () => {
+    // Guards the fork-local patch (seamfix/gstack#2). An upstream sync reverts these silently; this test is the tripwire.
+    run(`${TEAM_INIT} required`, { cwd: tmpDir });
+    const claude = fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf-8');
+    expect(claude).toContain('https://github.com/seamfix/gstack.git');
+    expect(claude).not.toContain('garrytan/gstack');
+    for (const rel of ['bin/gstack-team-init', 'bin/gstack-update-check', 'gstack-upgrade/SKILL.md.tmpl', 'gstack-upgrade/SKILL.md']) {
+      const src = fs.readFileSync(path.join(ROOT, rel), 'utf-8');
+      expect(src, `${rel} still references upstream`).not.toContain('github.com/garrytan/gstack');
+    }
+    const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf-8');
+    expect(readme).not.toMatch(/git clone[^\n]*garrytan\/gstack\.git/);
+  });
+
   test('errors without a mode argument', () => {
     const result = run(TEAM_INIT, { cwd: tmpDir });
     expect(result.exitCode).not.toBe(0);
