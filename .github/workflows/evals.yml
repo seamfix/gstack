@@ -86,7 +86,7 @@ jobs:
   # Same-repo PRs, pushes, and workflow_dispatch keep full coverage. Fork work
   # gets real coverage via a trusted base-repo branch.
   evals:
-    runs-on: ${{ matrix.suite.runner || 'ubicloud-standard-8' }}
+    runs-on: ${{ matrix.suite.runner || 'ubuntu-latest' }}
     needs: build-image
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     container:
@@ -104,7 +104,7 @@ jobs:
             file: test/skill-llm-eval.test.ts
           - name: e2e-browse
             file: test/skill-e2e-bws.test.ts
-            runner: ubicloud-standard-8
+            runner: ubuntu-latest
           - name: e2e-plan
             file: test/skill-e2e-plan.test.ts
           - name: e2e-deploy
@@ -418,7 +418,7 @@ jobs:
           $(echo -e "$SUITE_LINES")
 
           ---
-          *ubicloud-standard-8 runners (Docker: pre-baked toolchain + deps) | wall clock ≈ slowest suite*"
+          *ubuntu-latest runners (Docker: pre-baked toolchain + deps) | wall clock ≈ slowest suite*"
 
           if [ "$FAILED" -gt 0 ]; then
             FAILURES=""
