@@ -214,8 +214,10 @@ describe('gstack-team-init', () => {
   });
 
   test('fork-local: update-check derives owner/repo from the install origin (https, https+.git, ssh)', () => {
-    const fn = execSync(`sed -n '/^gstack_origin_repo()/,/^}/p' bin/gstack-update-check`, { cwd: ROOT, encoding: 'utf-8' });
-    expect(fn).toContain('gstack_origin_repo()');
+    // Extract the function into a file and source it — no quoting through two shells.
+    const fnFile = path.join(tmpDir, 'origin-fn.sh');
+    execSync(`sed -n '/^gstack_origin_repo()/,/^}/p' bin/gstack-update-check > '${fnFile}'`, { cwd: ROOT, shell: '/bin/bash' });
+    expect(fs.readFileSync(fnFile, 'utf-8')).toContain('gstack_origin_repo()');
     for (const [url, want] of [
       ['https://github.com/seamfix/gstack.git', 'seamfix/gstack'],
       ['https://github.com/seamfix/gstack', 'seamfix/gstack'],
@@ -223,7 +225,7 @@ describe('gstack-team-init', () => {
       ['https://github.com/garrytan/gstack.git', 'garrytan/gstack'],
     ]) {
       execSync(`git remote remove origin 2>/dev/null; git remote add origin '${url}'`, { cwd: tmpDir, shell: '/bin/bash' });
-      const out = run(`bash -c '${fn.replace(/'/g, "'\\''")}; GSTACK_DIR="${tmpDir}" gstack_origin_repo'`);
+      const out = run(`bash -c 'source "${fnFile}"; gstack_origin_repo'`, { env: { GSTACK_DIR: tmpDir } });
       expect(out.stdout.trim(), url).toBe(want);
     }
   });
