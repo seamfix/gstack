@@ -13,7 +13,7 @@ gate that catches template/generated drift.
 ### Fork-local changes that every upstream sync must re-apply
 
 `bin/gstack-team-init`, `bin/gstack-update-check`, `gstack-upgrade/SKILL.md(.tmpl)`, README/CONTRIBUTING/tutorial clone
-commands → `seamfix/gstack`. Guarded by the `fork-local:` test in `test/team-mode.test.ts` — if it fails after a sync,
+commands → `seamfix/gstack`; `.github/workflows/*.yml` `runs-on: ubuntu-latest` (upstream uses Ubicloud runners this org doesn't have — jobs queue forever). Guarded by the `fork-local:` test in `test/team-mode.test.ts` — if it fails after a sync,
 re-apply. Canonical list: seamfix/ai-governance `docs/runbooks/gstack-fork-sync.md`.
 
 ## NEXT PRIORITY

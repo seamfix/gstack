@@ -211,6 +211,11 @@ describe('gstack-team-init', () => {
     }
     const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf-8');
     expect(readme).not.toMatch(/git clone[^\n]*garrytan\/gstack\.git/);
+    // Workflows must run on GitHub-hosted runners: the seamfix org has no Ubicloud runners, so upstream's labels queue forever.
+    for (const wf of fs.readdirSync(path.join(ROOT, '.github', 'workflows')).filter(f => f.endsWith('.yml'))) {
+      const y = fs.readFileSync(path.join(ROOT, '.github', 'workflows', wf), 'utf-8');
+      expect(y, `${wf} requests a ubicloud runner`).not.toMatch(/runs-on:\s*ubicloud/);
+    }
   });
 
   test('fork-local: update-check derives owner/repo from the install origin (https, https+.git, ssh)', () => {
