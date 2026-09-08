@@ -52,8 +52,12 @@ SNOOZE_FILE="$STATE_DIR/update-snoozed"
 VERSION_FILE="$GSTACK_DIR/VERSION"
 # Fork-local: compare against the install's OWN origin (seamfix/gstack), never a hardcoded upstream — otherwise every
 # fork install is nagged toward upstream forever (fork 1.68.3 vs upstream 1.81.0) while auto-upgrade pulls the fork.
-_ORIGIN_URL="$(git -C "$GSTACK_DIR" remote get-url origin 2>/dev/null || true)"
-_ORIGIN_REPO="$(printf '%s' "$_ORIGIN_URL" | sed -nE 's#.*github\.com[:/]([^/]+/[^/]+?)(\.git)?/?$#\1#p' | sed 's/\.git$//')"
+gstack_origin_repo() { # owner/repo of the install's own origin (https or ssh, with or without .git); empty if not GitHub
+  local u; u="$(git -C "${GSTACK_DIR:-.}" remote get-url origin 2>/dev/null || true)"
+  u="${u%/}"; u="${u%.git}"
+  printf '%s' "$u" | sed -nE 's#^.*github\.com[:/]([^/]+/[^/]+)$#\1#p'
+}
+_ORIGIN_REPO="$(gstack_origin_repo)"
 [ -n "$_ORIGIN_REPO" ] || _ORIGIN_REPO="seamfix/gstack"
 REMOTE_URL="${GSTACK_REMOTE_URL:-https://raw.githubusercontent.com/$_ORIGIN_REPO/main/VERSION}"
 REMOTE_REPO="${GSTACK_REMOTE_REPO:-https://github.com/$_ORIGIN_REPO.git}"

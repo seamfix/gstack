@@ -213,6 +213,21 @@ describe('gstack-team-init', () => {
     expect(readme).not.toMatch(/git clone[^\n]*garrytan\/gstack\.git/);
   });
 
+  test('fork-local: update-check derives owner/repo from the install origin (https, https+.git, ssh)', () => {
+    const fn = execSync(`sed -n '/^gstack_origin_repo()/,/^}/p' bin/gstack-update-check`, { cwd: ROOT, encoding: 'utf-8' });
+    expect(fn).toContain('gstack_origin_repo()');
+    for (const [url, want] of [
+      ['https://github.com/seamfix/gstack.git', 'seamfix/gstack'],
+      ['https://github.com/seamfix/gstack', 'seamfix/gstack'],
+      ['git@github.com:seamfix/gstack.git', 'seamfix/gstack'],
+      ['https://github.com/garrytan/gstack.git', 'garrytan/gstack'],
+    ]) {
+      execSync(`git remote remove origin 2>/dev/null; git remote add origin '${url}'`, { cwd: tmpDir, shell: '/bin/bash' });
+      const out = run(`bash -c '${fn.replace(/'/g, "'\\''")}; GSTACK_DIR="${tmpDir}" gstack_origin_repo'`);
+      expect(out.stdout.trim(), url).toBe(want);
+    }
+  });
+
   test('errors without a mode argument', () => {
     const result = run(TEAM_INIT, { cwd: tmpDir });
     expect(result.exitCode).not.toBe(0);
