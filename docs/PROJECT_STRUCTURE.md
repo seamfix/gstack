@@ -30,7 +30,6 @@ gstack/
 │   ├── test-free-shards.ts  # Strict parallel free-suite runner (GSTACK_FREE_JOBS, opt-in flaky retry)
 │   ├── test-paid-shards.ts  # Sharded paid-tier runner (one Bun process per shard)
 │   ├── eval-flake-rank.ts  # Flake-telemetry dial: ranks tests by retried passes across eval runs + the free-lane ledger
-│   ├── sandbox-doctor.sh  # One-command cloud-sandbox fixer: makes the free suite run green
 │   └── dev-skill.ts       # Watch mode
 ├── test/            # Skill validation + eval tests
 │   ├── helpers/     # skill-parser.ts, session-runner.ts, llm-judge.ts, eval-store.ts, aside-available.ts (Aside self-skip probe)

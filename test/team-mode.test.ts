@@ -235,6 +235,16 @@ describe('gstack-team-init', () => {
     }
   });
 
+  test('fork-local: Aside off by default (GSTACK_SKIP_ASIDE=1 in settings env) in both modes', () => {
+    for (const mode of ['optional', 'required']) {
+      const d = mkTmpDir(); execSync('git init', { cwd: d });
+      run(`${TEAM_INIT} ${mode}`, { cwd: d });
+      const settings = JSON.parse(fs.readFileSync(path.join(d, '.claude', 'settings.json'), 'utf-8'));
+      expect(settings.env?.GSTACK_SKIP_ASIDE, `${mode} mode`).toBe('1');
+      fs.rmSync(d, { recursive: true, force: true });
+    }
+  });
+
   test('errors without a mode argument', () => {
     const result = run(TEAM_INIT, { cwd: tmpDir });
     expect(result.exitCode).not.toBe(0);

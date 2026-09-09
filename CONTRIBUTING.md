@@ -191,7 +191,6 @@ and `GSTACK_FREE_RETRY_FLAKY=1` opts into one serial retry pass for
 syscall-supervised sandboxes (off by default locally — dev boxes should see
 flakes; the required CI free lane turns it on and uploads every flaky pass
 in a JSONL ledger artifact that `bun run eval:flake-rank` folds in).
-Working in a cloud sandbox? Run `scripts/sandbox-doctor.sh` once per boot to
 make the suite run green (details in
 [docs/TESTING_INTERNALS.md](docs/TESTING_INTERNALS.md)).
 Don't type bare `bun test` for the suite: it walks the whole repo, loads paid

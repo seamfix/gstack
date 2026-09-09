@@ -200,6 +200,23 @@ HOOK_EOF
   fi
 fi
 
+# Seamfix org default: Aside (gstack driving your REAL signed-in browser + its cloud
+# agent) is OFF unless a repo opts in. All three runtime gates honor GSTACK_SKIP_ASIDE=1
+# (lib/aside-render.ts, browse/SKILL.md, setup); here we just set it in the repo's
+# settings so every session inherits it. Runs in BOTH modes. A repo opts in by setting
+# env.GSTACK_SKIP_ASIDE to "0" (or removing it). Fork-local (seamfix/gstack#3).
+if command -v bun >/dev/null 2>&1; then
+  ASIDE_SETTINGS="$REPO_ROOT/.claude/settings.json"; mkdir -p "$(dirname "$ASIDE_SETTINGS")"
+  GSTACK_ASIDE_SETTINGS_PATH="$ASIDE_SETTINGS" bun -e "
+    const fs = require('fs');
+    const p = process.env.GSTACK_ASIDE_SETTINGS_PATH;
+    let s = {}; try { s = JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
+    if (!s.env) s.env = {};
+    if (s.env.GSTACK_SKIP_ASIDE === undefined) s.env.GSTACK_SKIP_ASIDE = '1';
+    const tmp = p + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(s, null, 2) + '\n'); fs.renameSync(tmp, p);
+  " 2>/dev/null && { case " ${GENERATED[*]} " in *" .claude/settings.json "*) ;; *) GENERATED+=(".claude/settings.json");; esac; echo "  + .claude/settings.json — Aside off by default (GSTACK_SKIP_ASIDE=1; set to 0 to opt in)"; }
+fi
+
 # ── Summary ────────────────────────────────────────────────────
 
 echo ""

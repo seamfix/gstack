@@ -202,7 +202,6 @@ against a temp `GSTACK_INSTALL_DIR` / `GSTACK_SKILLS_DIR`, and
 ## Cloud sandboxes (Vercel / Conductor cloud workspaces)
 
 Syscall-supervised sandboxes need environment setup before `bun run test` can
-run green: run `scripts/sandbox-doctor.sh` once per boot. It documents and
 treats the full failure taxonomy (missing /dev/fd, 64M /dev/shm, spurious
 access(2) EACCES from the seccomp supervisor under load, full-capability
 processes defeating chmod-denial tests, no X server, no git identity, and
