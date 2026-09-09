@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubicloud-standard-8
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
