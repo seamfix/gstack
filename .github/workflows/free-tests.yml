@@ -77,7 +77,9 @@ jobs:
       # Cache restores browser binaries; install is still required for system
       # deps and is a fast no-op for already-present browsers.
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list  # avoid ubuntu-latest's flaky chrome apt source hash-sum mismatch
+          npx playwright install --with-deps chromium
 
       # Headed-browser tests (handoff, extension sidepanel DOM) need a real
       # DISPLAY — first Linux run failed with Playwright's "launched a headed
