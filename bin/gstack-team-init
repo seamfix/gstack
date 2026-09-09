@@ -7,6 +7,16 @@
 #
 # Run from the root of your team's repo (not from the gstack directory).
 
+# Heredoc delivery guard. bash 5.2+ writes a heredoc body <=64KiB through a
+# pipe in the forked child before exec, with no reader on the other end. On
+# macOS under pipe-KVA pressure a fresh pipe gets a 512-byte buffer, so any
+# body >=512B blocks write() forever and the script hangs at startup with no
+# output. Compat level 50 restores the tempfile path. These scripts are
+# bash-3.2-clean, so the compat level costs them nothing. Not exported: the
+# guard is per-script, and it survives `bash script.sh` call sites that
+# bypass the shebang.
+BASH_COMPAT=50
+
 set -euo pipefail
 
 MODE="${1:-}"
@@ -63,7 +73,7 @@ cd ~/.claude/skills/gstack && ./setup --team
 ```
 
 Skills like /qa, /ship, /review, /investigate, and /browse become available after install.
-Use /browse for all web browsing. Use ~/.claude/skills/gstack/... for gstack file paths.'
+Use /browse for all web browsing (Aside first, the bundled gstack browser as fallback). Use ~/.claude/skills/gstack/... for gstack file paths.'
 else
   SNIPPET='## gstack (REQUIRED — global install)
 
@@ -90,7 +100,7 @@ If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
 Do not skip skills, ignore gstack errors, or work around missing gstack.
 
 Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
-and /browse are available. Use /browse for all web browsing.
+and /browse are available. Use /browse for all web browsing (Aside first, the bundled gstack browser as fallback).
 Use the resolved install path above for gstack file paths
 (default: ~/.claude/skills/gstack).'
 fi
@@ -188,6 +198,23 @@ HOOK_EOF
   else
     echo "  ! bun not found — manually add the PreToolUse hook to .claude/settings.json"
   fi
+fi
+
+# Seamfix org default: Aside (gstack driving your REAL signed-in browser + its cloud
+# agent) is OFF unless a repo opts in. All three runtime gates honor GSTACK_SKIP_ASIDE=1
+# (lib/aside-render.ts, browse/SKILL.md, setup); here we just set it in the repo's
+# settings so every session inherits it. Runs in BOTH modes. A repo opts in by setting
+# env.GSTACK_SKIP_ASIDE to "0" (or removing it). Fork-local (seamfix/gstack#3).
+if command -v bun >/dev/null 2>&1; then
+  ASIDE_SETTINGS="$REPO_ROOT/.claude/settings.json"; mkdir -p "$(dirname "$ASIDE_SETTINGS")"
+  GSTACK_ASIDE_SETTINGS_PATH="$ASIDE_SETTINGS" bun -e "
+    const fs = require('fs');
+    const p = process.env.GSTACK_ASIDE_SETTINGS_PATH;
+    let s = {}; try { s = JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
+    if (!s.env) s.env = {};
+    if (s.env.GSTACK_SKIP_ASIDE === undefined) s.env.GSTACK_SKIP_ASIDE = '1';
+    const tmp = p + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(s, null, 2) + '\n'); fs.renameSync(tmp, p);
+  " 2>/dev/null && { case " ${GENERATED[*]} " in *" .claude/settings.json "*) ;; *) GENERATED+=(".claude/settings.json");; esac; echo "  + .claude/settings.json — Aside off by default (GSTACK_SKIP_ASIDE=1; set to 0 to opt in)"; }
 fi
 
 # ── Summary ────────────────────────────────────────────────────
