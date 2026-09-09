@@ -83,7 +83,7 @@ jobs:
         run: |
           # ubuntu-latest ships a chrome apt source that intermittently fails hash-sum checks; drop any source that references it (name/format-independent).
           sudo grep -rlZ 'dl.google.com' /etc/apt/sources.list.d/ 2>/dev/null | sudo xargs -0 -r rm -f
-          sudo apt-get update || true   # shellcheck is in ubuntu main; a residual third-party-source hiccup must not fail the gate
+          sudo apt-get update || true   # the linter comes from ubuntu main; a residual third-party-source hiccup must not fail the gate
           sudo apt-get install -y shellcheck
           shellcheck --version
 
