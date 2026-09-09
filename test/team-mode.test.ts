@@ -199,6 +199,42 @@ describe('gstack-team-init', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
+  test('fork-local: install and upgrade paths point at seamfix/gstack, never upstream', () => {
+    // Guards the fork-local patch (seamfix/gstack#2). An upstream sync reverts these silently; this test is the tripwire.
+    run(`${TEAM_INIT} required`, { cwd: tmpDir });
+    const claude = fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf-8');
+    expect(claude).toContain('https://github.com/seamfix/gstack.git');
+    expect(claude).not.toContain('garrytan/gstack');
+    for (const rel of ['bin/gstack-team-init', 'bin/gstack-update-check', 'gstack-upgrade/SKILL.md.tmpl', 'gstack-upgrade/SKILL.md']) {
+      const src = fs.readFileSync(path.join(ROOT, rel), 'utf-8');
+      expect(src, `${rel} still references upstream`).not.toContain('github.com/garrytan/gstack');
+    }
+    const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf-8');
+    expect(readme).not.toMatch(/git clone[^\n]*garrytan\/gstack\.git/);
+    // Workflows must run on GitHub-hosted runners: the seamfix org has no Ubicloud runners, so upstream's labels queue forever.
+    for (const wf of fs.readdirSync(path.join(ROOT, '.github', 'workflows')).filter(f => f.endsWith('.yml'))) {
+      const y = fs.readFileSync(path.join(ROOT, '.github', 'workflows', wf), 'utf-8');
+      expect(y, `${wf} requests a ubicloud runner`).not.toMatch(/runs-on:\s*ubicloud/);
+    }
+  });
+
+  test('fork-local: update-check derives owner/repo from the install origin (https, https+.git, ssh)', () => {
+    // Extract the function into a file and source it — no quoting through two shells.
+    const fnFile = path.join(tmpDir, 'origin-fn.sh');
+    execSync(`sed -n '/^gstack_origin_repo()/,/^}/p' bin/gstack-update-check > '${fnFile}'`, { cwd: ROOT, shell: '/bin/bash' });
+    expect(fs.readFileSync(fnFile, 'utf-8')).toContain('gstack_origin_repo()');
+    for (const [url, want] of [
+      ['https://github.com/seamfix/gstack.git', 'seamfix/gstack'],
+      ['https://github.com/seamfix/gstack', 'seamfix/gstack'],
+      ['git@github.com:seamfix/gstack.git', 'seamfix/gstack'],
+      ['https://github.com/garrytan/gstack.git', 'garrytan/gstack'],
+    ]) {
+      execSync(`git remote remove origin 2>/dev/null; git remote add origin '${url}'`, { cwd: tmpDir, shell: '/bin/bash' });
+      const out = run(`bash -c 'source "${fnFile}"; gstack_origin_repo'`, { env: { GSTACK_DIR: tmpDir } });
+      expect(out.stdout.trim(), url).toBe(want);
+    }
+  });
+
   test('errors without a mode argument', () => {
     const result = run(TEAM_INIT, { cwd: tmpDir });
     expect(result.exitCode).not.toBe(0);

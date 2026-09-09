@@ -50,8 +50,17 @@ CACHE_FILE="$STATE_DIR/last-update-check"
 MARKER_FILE="$STATE_DIR/just-upgraded-from"
 SNOOZE_FILE="$STATE_DIR/update-snoozed"
 VERSION_FILE="$GSTACK_DIR/VERSION"
-REMOTE_URL="${GSTACK_REMOTE_URL:-https://raw.githubusercontent.com/garrytan/gstack/main/VERSION}"
-REMOTE_REPO="${GSTACK_REMOTE_REPO:-https://github.com/garrytan/gstack.git}"
+# Fork-local: compare against the install's OWN origin (seamfix/gstack), never a hardcoded upstream — otherwise every
+# fork install is nagged toward upstream forever (fork 1.68.3 vs upstream 1.81.0) while auto-upgrade pulls the fork.
+gstack_origin_repo() { # owner/repo of the install's own origin (https or ssh, with or without .git); empty if not GitHub
+  local u; u="$(git -C "${GSTACK_DIR:-.}" remote get-url origin 2>/dev/null || true)"
+  u="${u%/}"; u="${u%.git}"
+  printf '%s' "$u" | sed -nE 's#^.*github\.com[:/]([^/]+/[^/]+)$#\1#p'
+}
+_ORIGIN_REPO="$(gstack_origin_repo)"
+[ -n "$_ORIGIN_REPO" ] || _ORIGIN_REPO="seamfix/gstack"
+REMOTE_URL="${GSTACK_REMOTE_URL:-https://raw.githubusercontent.com/$_ORIGIN_REPO/main/VERSION}"
+REMOTE_REPO="${GSTACK_REMOTE_REPO:-https://github.com/$_ORIGIN_REPO.git}"
 
 # ─── Force flag (busts cache + snooze for standalone /gstack-upgrade) ──
 if [ "${1:-}" = "--force" ]; then
@@ -237,7 +246,7 @@ if [ -z "${GSTACK_REMOTE_URL:-}" ]; then
       git ls-remote "$1" refs/heads/main 2>/dev/null' _ "$REMOTE_REPO" || true)"
   _REMOTE_SHA="$(echo "$_LSR_LINE" | awk '{print $1}')"
   if echo "$_REMOTE_SHA" | grep -qE '^[0-9a-f]{40}$'; then
-    _SHA_URL="https://raw.githubusercontent.com/garrytan/gstack/${_REMOTE_SHA}/VERSION"
+    _SHA_URL="https://raw.githubusercontent.com/$_ORIGIN_REPO/${_REMOTE_SHA}/VERSION"
     REMOTE="$(_receipted_version_fetch "$_SHA_URL")"
   fi
 fi
