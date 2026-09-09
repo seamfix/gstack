@@ -78,7 +78,7 @@ jobs:
       # deps and is a fast no-op for already-present browsers.
       - name: Install Playwright Chromium
         run: |
-          sudo rm -f /etc/apt/sources.list.d/google-chrome.list  # avoid ubuntu-latest's flaky chrome apt source hash-sum mismatch
+          sudo grep -rlZ 'dl.google.com' /etc/apt/sources.list.d/ 2>/dev/null | sudo xargs -0 -r rm -f   # drop ubuntu-latest's flaky chrome apt source (name/format-independent) before playwright's apt
           npx playwright install --with-deps chromium
 
       # Headed-browser tests (handoff, extension sidepanel DOM) need a real
